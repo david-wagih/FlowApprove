@@ -1,0 +1,36 @@
+# Linux Fundamentals lab: Ubuntu with systemd as PID 1, a normal sudo user, and the tools the
+# videos use. Free, runs on any OS with Podman or Docker.
+FROM docker.io/library/ubuntu:26.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# The cloud image strips man pages and docs. Put them back so `man` works.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends unminimize \
+ && yes | unminimize
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      systemd systemd-sysv libpam-systemd dbus cron \
+      sudo man-db manpages less bash-completion \
+      vim nano tree file \
+      procps psmisc htop \
+      iproute2 iputils-ping dnsutils curl ca-certificates netcat-openbsd \
+      openssh-client git python3 \
+ && rm -rf /var/lib/apt/lists/*
+
+# Behave like a real server: the base image blocks services from starting on install, and
+# masks units that make no sense in a container
+RUN rm -f /usr/sbin/policy-rc.d \
+ && systemctl mask systemd-udevd.service systemd-udevd-kernel.socket systemd-udevd-control.socket \
+      getty.target console-getty.service 2>/dev/null; \
+    systemctl enable cron
+
+# A normal user, so permissions and sudo behave like on a real machine (password: devops)
+RUN (userdel -r ubuntu 2>/dev/null || true) \
+ && useradd -m -s /bin/bash devops \
+ && echo 'devops:devops' | chpasswd \
+ && usermod -aG sudo devops \
+ && mkdir -p /var/lib/systemd/linger && touch /var/lib/systemd/linger/devops
+
+STOPSIGNAL SIGRTMIN+3
+CMD ["/sbin/init"]

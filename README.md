@@ -229,3 +229,6 @@ This repo is the demo project for the DevOps with David videos:
 | Git Fundamentals | Branches, merges & conflicts, undoing mistakes, PRs & code review |
 
 Links will be added here as the videos go live.
+
+For the Linux videos, use the free Ubuntu lab in [`lab/`](lab/): a container with systemd, so
+services, logs, cron and timers work like on a real server.
